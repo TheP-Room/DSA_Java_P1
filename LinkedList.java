@@ -1,123 +1,108 @@
-import java.util.NoSuchElementException;
-
-public class LinkedList{
-
-    // custom made linkedList
-
+public class LinkedList<T>
+{
+    // Custom made generic linked list
     private class Node{
-        private int value;
+        private T item;
         private Node next;
-
-        public Node(int value){
-            this.value = value;
+        
+        public Node(T item) {
+            this.item = item;
         }
     }
-
-    private Node head;
-    private Node tail;
+    
+    private Node head,tail;
     private int size;
-
-    public void addFirst(int value){
-        var node = new Node(value);
+    
+    public void addLast(T item) {
+        Node node = new Node(item);
         if (head == null)
             head = tail = node;
-        else{
-            node.next = head;
-            head = node;
-        }
-        size++;
-    }
-
-    public void addLast(int value){
-        var node = new Node(value);
-        if (head == null)
-            head = tail = node;
-        else{
+        else {
             tail.next = node;
             tail = node;
         }
         size++;
     }
-
-    public int indexOf(int value){
+    
+    public void addFirst(T item) {
+        Node node = new Node(item);
+        if (head == null)
+            head = tail = node;
+        else {
+            node.next = head;
+            head = node;
+        }
+        size++;
+    }
+    
+    private void checkNull() {
+        if (head == null)
+            throw new IllegalStateException();
+    }
+    
+    public int indexOf(T item) {
+        checkNull();
+        var current = head;
         int index = 0;
-        var currentNode = head;
-        while(currentNode != null){
-            if (currentNode.value == value)
+        while (current != null) {
+            if (current.item == item)
                 return index;
-            currentNode = currentNode.next;
+            current = current.next;
             index++;
         }
         return -1;
     }
-
-    public boolean contains(int value){
-        return indexOf(value) >= 0;
+    
+    public boolean contains(T item) {
+        checkNull();
+        return indexOf(item) > -1;
     }
-
-    public void removeFirst(){
-        if (head == null) throw new NoSuchElementException();
-
-        if (head.next == null) {
-            head = tail = null;
-            size--;
-            return;
-        }
-
-        var second = head.next;
+    
+    public void removeFirst() {
+        checkNull();
+        var newHead = head.next;
         head.next = null;
-        head = second;
+        head = newHead;
         size--;
     }
-
-    public void removeLast(){
-        if (head == tail) {
-            head = tail = null;
-            size--;
-            return;
-        }
+    
+    public void removeLast() {
+        checkNull();
         var current = head;
-        while(current != null){
-            if (current.next == tail) break;
+        while (current.next != null) {
+            if (current.next.next == null) {
+                current.next = null;
+                tail = current;
+                break;
+            }
             current = current.next;
         }
-        tail = current;
-        tail.next = null;
         size--;
     }
-
-    public int size(){
+    
+    public int getSize() {
         return size;
     }
-
-    public int[] toArray(){
-        if (head == null) return null;
-        var array = new int[size];
+    
+    public Array<T> toArray() {
+        checkNull();
         var current = head;
-        int index = 0;
-        while(current != null){
-            array[index++] = current.value;
+        Array<T> result = new Array();
+        while (current != null) {
+            result.insert(current.item);
             current = current.next;
         }
-        return array;
+        return result;
     }
-
-    public void reverse(){
-//        var current = head;
-//        while (current != null){ // O(n)
-//            addFirst(current.value); // O(1)
-//            current = current.next;
-//        }
-//        var newSize = size();
-//        for (int i = 0; i<(newSize/2); i++) // O(n/2)
-//            removeLast(); // O(n)
-
-        if (head == null) return;
+    
+    public void reverse() {
+        checkNull();
         var previous = head;
         var current = head.next;
-        while (current != null){
+        while (current != null) {
             var next = current.next;
             current.next = previous;
+            
             previous = current;
             current = next;
         }
@@ -125,53 +110,59 @@ public class LinkedList{
         tail.next = null;
         head = previous;
     }
-
-    public int getKThFromEnd(int k){
-//        if (k == 0 || k > size()) return -1;
-//        var current = head;
-//        while(true) {
-//            if (indexOf(current.value) == size() - k)
-//                return current.value;
-//            current = current.next;
-//        }
-
-        if (head == null || head.next == null) return -1;
-
-        var a = head;
-        var b = head;
-        for (int i = 0; i<k-1; i++){
-            b = b.next;
-            if (b == null) throw new IllegalStateException();
-        }
-        while (b != tail){
-            a = a.next;
-            b = b.next;
-        }
-        return a.value;
-    }
-
-    public void printMiddle(){
-        if (head == null) return;
-        var a = head;
-        var b = head;
-        while (b != tail && b.next != tail){
-            b = b.next.next;
-            a = a.next;
-        }
-        if (b == tail)
-            System.out.println(a.value);
-        else
-            System.out.println(a.value + "," + a.next.value);
-    }
-
-    public boolean hasLoop(){
+    
+    public T kThNodeFromEnd(int k) {
+        checkNull();
+        if (k <= 0 || k > size)
+            throw new IllegalArgumentException();
         var slow = head;
-        var fast = head;
-        while (fast != null && fast.next != null){
-            fast = fast.next.next;
+        var fast = head.next;
+        for (int i = 0; i<k-1; i++){
+            if (fast == null)
+                break;
+            fast = fast.next;
+        }
+        while (fast != null) {
             slow = slow.next;
-            if (fast == slow) return true;
+            fast = fast.next;
+        }
+        return slow.item;
+    }
+    
+    public void printMiddle() {
+        checkNull();
+        var slow = head;
+        var fast = head.next;
+        while (true) {
+            slow = slow.next;
+            fast = fast.next.next;
+            if (fast == null || fast.next == null)
+                break;
+        }
+        System.out.println((fast == null) ? slow.item : slow.item+", "+
+            slow.next.item);
+    }
+    
+    public boolean hasLoop() {
+        checkNull();
+        var slow = head;
+        var fast = head.next;
+        while (fast != null) {
+            if (fast.next == slow)
+                return true;
+            slow = slow.next;
+            fast = fast.next;
         }
         return false;
+    }
+    
+    public void print() {
+        checkNull();
+        var current = head;
+        while (current != null) {
+            System.out.print(current.item+", ");
+            current = current.next;
+        }
+        System.out.println();
     }
 }
